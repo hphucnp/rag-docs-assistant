@@ -1,14 +1,23 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import router as api_v1_router
 from app.config import get_settings
+from app.services.storage import ensure_bucket
 
 settings = get_settings()
 
 logging.basicConfig(level=settings.log_level)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await ensure_bucket()
+    yield
+
 
 app = FastAPI(
     title="RAG Docs Assistant",
@@ -16,6 +25,7 @@ app = FastAPI(
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

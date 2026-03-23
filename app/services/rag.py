@@ -21,6 +21,7 @@ async def ingest_document(
     title: str,
     content: str,
     source_url: str | None = None,
+    storage_key: str | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> Document:
     """Ingest a document: generate its embedding and store it."""
@@ -30,6 +31,7 @@ async def ingest_document(
         title=title,
         content=content,
         source_url=source_url,
+        storage_key=storage_key,
         metadata_=metadata or {},
         embedding=embedding,
     )
@@ -126,6 +128,10 @@ async def delete_document(db: AsyncSession, document_id: uuid.UUID) -> bool:
     doc = await get_document(db, document_id)
     if doc is None:
         return False
+    storage_key = doc.storage_key
     await db.delete(doc)
     await db.commit()
+    if storage_key:
+        from app.services.storage import delete_file
+        await delete_file(storage_key)
     return True

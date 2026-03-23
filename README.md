@@ -7,14 +7,14 @@ Ingest documents, store their embeddings, perform semantic search, and ask natur
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| API | FastAPI + Uvicorn |
-| Vector DB | PostgreSQL 16 + pgvector |
-| ORM / Migrations | SQLAlchemy (async) + Alembic |
-| Embeddings | OpenAI `text-embedding-3-small` |
-| LLM | OpenAI `gpt-4o-mini` |
-| Containers | Docker + Docker Compose |
+| Layer            | Technology                      |
+| ---------------- | ------------------------------- |
+| API              | FastAPI + Uvicorn               |
+| Vector DB        | PostgreSQL 16 + pgvector        |
+| ORM / Migrations | SQLAlchemy (async) + Alembic    |
+| Embeddings       | OpenAI `text-embedding-3-small` |
+| LLM              | OpenAI `gpt-4o-mini`            |
+| Containers       | Docker + Docker Compose         |
 
 ---
 
@@ -81,15 +81,15 @@ docker compose exec api alembic upgrade head
 
 ## API Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/health` | Health check |
-| `POST` | `/api/v1/documents/ingest` | Ingest a document (generates embedding) |
-| `GET` | `/api/v1/documents/` | List all documents |
-| `GET` | `/api/v1/documents/{id}` | Get a document by ID |
-| `DELETE` | `/api/v1/documents/{id}` | Delete a document |
-| `POST` | `/api/v1/documents/search` | Semantic similarity search |
-| `POST` | `/api/v1/documents/ask` | RAG: retrieve context + LLM answer |
+| Method   | Path                       | Description                             |
+| -------- | -------------------------- | --------------------------------------- |
+| `GET`    | `/health`                  | Health check                            |
+| `POST`   | `/api/v1/documents/ingest` | Ingest a document (generates embedding) |
+| `GET`    | `/api/v1/documents/`       | List all documents                      |
+| `GET`    | `/api/v1/documents/{id}`   | Get a document by ID                    |
+| `DELETE` | `/api/v1/documents/{id}`   | Delete a document                       |
+| `POST`   | `/api/v1/documents/search` | Semantic similarity search              |
+| `POST`   | `/api/v1/documents/ask`    | RAG: retrieve context + LLM answer      |
 
 ### Example: Ingest
 
@@ -125,4 +125,3 @@ uvicorn app.main:app --reload
 ```bash
 pytest
 ```
-

@@ -24,6 +24,7 @@ class Document(Base):
     metadata_: Mapped[dict] = mapped_column(
         "metadata", JSONB, nullable=False, default=dict
     )
+    storage_key: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     embedding: Mapped[list[float] | None] = mapped_column(
         Vector(settings.embedding_dimensions), nullable=True
     )

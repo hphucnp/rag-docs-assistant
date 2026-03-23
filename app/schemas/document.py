@@ -21,6 +21,7 @@ class DocumentRead(BaseModel):
     title: str
     content: str
     source_url: str | None
+    storage_key: str | None
     metadata_: dict[str, Any] = Field(alias="metadata_", serialization_alias="metadata")
     created_at: datetime
     updated_at: datetime | None

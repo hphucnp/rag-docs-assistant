@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     # LLM
     llm_model: str = "gpt-4o-mini"
 
+    # MinIO
+    minio_host: str = "localhost"
+    minio_port: int = 9000
+    minio_access_key: str = "rag_minio_user"
+    minio_secret_key: str = "rag_minio_secret"
+    minio_bucket: str = "rag-documents"
+    minio_secure: bool = False
+
     @property
     def async_database_url(self) -> str:
         if self.database_url:
