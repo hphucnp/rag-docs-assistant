@@ -50,3 +50,8 @@ class AskRequest(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     sources: list[SearchResult]
+
+
+class DownloadURLResponse(BaseModel):
+    url: str
+    expires_in: int

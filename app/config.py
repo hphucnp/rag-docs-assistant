@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     minio_secret_key: str = "rag_minio_secret"
     minio_bucket: str = "rag-documents"
     minio_secure: bool = False
+    max_upload_size_mb: int = 10
 
     @property
     def async_database_url(self) -> str:

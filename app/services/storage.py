@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from miniopy_async import Minio
 from miniopy_async.error import S3Error
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 from app.config import get_settings
 
@@ -33,6 +34,7 @@ def get_minio_client() -> Minio:
     return _client
 
 
+@retry(stop=stop_after_attempt(10), wait=wait_fixed(2))
 async def ensure_bucket() -> None:
     """Create the default bucket if it does not exist yet."""
     client = get_minio_client()

@@ -1,6 +1,7 @@
 from app.schemas.document import (
     AskRequest,
     AskResponse,
+    DownloadURLResponse,
     DocumentIngest,
     DocumentRead,
     SearchRequest,
@@ -14,4 +15,5 @@ __all__ = [
     "SearchResult",
     "AskRequest",
     "AskResponse",
+    "DownloadURLResponse",
 ]

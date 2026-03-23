@@ -1,0 +1,114 @@
+{
+  "info": {
+    "_postman_id": "2f5eb267-4ad0-4d01-a2f8-8c76069d1f53",
+    "name": "rag-docs-assistant",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "upload_file_path",
+      "value": "/absolute/path/to/your/document.pdf"
+    },
+    {
+      "key": "document_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Upload Document",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "{{upload_file_path}}"
+            },
+            {
+              "key": "title",
+              "value": "Sample upload from Postman",
+              "type": "text"
+            },
+            {
+              "key": "source_url",
+              "value": "https://example.com/docs/sample",
+              "type": "text"
+            },
+            {
+              "key": "metadata",
+              "value": "{\"category\":\"manual-test\",\"source\":\"postman\"}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/documents/upload",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "documents",
+            "upload"
+          ]
+        },
+        "description": "Upload a PDF/TXT/MD file using multipart/form-data. Update {{upload_file_path}} before sending."
+      },
+      "response": []
+    },
+    {
+      "name": "Get Download URL",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/documents/{{document_id}}/download-url?expires=3600",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "documents",
+            "{{document_id}}",
+            "download-url"
+          ],
+          "query": [
+            {
+              "key": "expires",
+              "value": "3600"
+            }
+          ]
+        },
+        "description": "Set {{document_id}} from the upload response to fetch a pre-signed MinIO URL."
+      },
+      "response": []
+    }
+  ]
+}
