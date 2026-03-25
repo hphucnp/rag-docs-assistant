@@ -47,8 +47,8 @@ rag-docs-assistant/
 │   └── test_documents.py
 ├── docker-compose.yml
 ├── Dockerfile
-├── requirements.txt
 ├── pyproject.toml
+├── uv.lock
 └── alembic.ini
 ```
 
