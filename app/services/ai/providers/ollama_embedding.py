@@ -55,9 +55,21 @@ class OllamaEmbeddingService(EmbeddingService):
             # Backward compatibility for old Ollama versions.
             if response.status_code == 404:
                 if isinstance(input_value, list):
-                    raise EmbeddingServiceError(
-                        "Current Ollama version does not support batch embed endpoint"
+                    logger.warning(
+                        "Ollama does not support batch /api/embed; falling back to sequential /api/embeddings"
                     )
+                    results: list[list[float]] = []
+                    for text in input_value:
+                        r = await client.post(
+                            "/api/embeddings",
+                            json={"model": self._model, "prompt": text},
+                        )
+                        if r.status_code >= 400:
+                            raise EmbeddingServiceError(
+                                f"Ollama embedding request failed ({r.status_code}): {r.text}"
+                            )
+                        results.extend(self._extract_embeddings(r.json()))
+                    return results
                 response = await client.post(
                     "/api/embeddings",
                     json={"model": self._model, "prompt": input_value},
