@@ -53,6 +53,7 @@ async def test_ingest_document(client):
     mock_doc.title = "Test Doc"
     mock_doc.content = "Some content"
     mock_doc.source_url = None
+    mock_doc.storage_key = None
     mock_doc.metadata_ = {}
     mock_doc.created_at = "2026-01-01T00:00:00Z"
     mock_doc.updated_at = None

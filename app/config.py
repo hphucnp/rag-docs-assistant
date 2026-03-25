@@ -19,15 +19,21 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     database_url: Optional[str] = None
 
-    # OpenAI
-    openai_api_key: str
+    # Provider selection
+    embedding_provider: str = "ollama"
+    chat_provider: str = "groq"
+
+    # Ollama embedding
+    ollama_base_url: str = "http://localhost:11434"
 
     # Embedding
-    embedding_model: str = "text-embedding-3-small"
+    embedding_model: str = "nomic-embed-text"
     embedding_dimensions: int = 1536
 
-    # LLM
-    llm_model: str = "gpt-4o-mini"
+    # Groq LLM
+    groq_api_key: Optional[str] = None
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    llm_model: str = "llama-3.1-8b-instant"
 
     # MinIO
     minio_host: str = "localhost"

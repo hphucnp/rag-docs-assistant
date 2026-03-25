@@ -2,14 +2,14 @@ import logging
 import uuid
 from typing import Any
 
-from openai import AsyncOpenAI
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.models.document import Document
 from app.schemas.document import SearchResult
-from app.services.embedding import embed_text, get_openai_client
+from app.services.ai.factory import get_chat_service
+from app.services.embedding import embed_text
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -96,17 +96,13 @@ async def ask(
     )
     user_prompt = f"Context:\n{context_blocks}\n\nQuestion: {question}"
 
-    client: AsyncOpenAI = get_openai_client()
-    completion = await client.chat.completions.create(
+    chat_service = get_chat_service()
+    answer = await chat_service.generate(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
         model=settings.llm_model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
         temperature=0.2,
     )
-
-    answer = completion.choices[0].message.content or ""
     return answer, sources
 
 

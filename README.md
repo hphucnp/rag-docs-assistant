@@ -7,14 +7,14 @@ Ingest documents, store their embeddings, perform semantic search, and ask natur
 
 ## Tech Stack
 
-| Layer            | Technology                      |
-| ---------------- | ------------------------------- |
-| API              | FastAPI + Uvicorn               |
-| Vector DB        | PostgreSQL 16 + pgvector        |
-| ORM / Migrations | SQLAlchemy (async) + Alembic    |
-| Embeddings       | OpenAI `text-embedding-3-small` |
-| LLM              | OpenAI `gpt-4o-mini`            |
-| Containers       | Docker + Docker Compose         |
+| Layer            | Technology                   |
+| ---------------- | ---------------------------- |
+| API              | FastAPI + Uvicorn            |
+| Vector DB        | PostgreSQL 16 + pgvector     |
+| ORM / Migrations | SQLAlchemy (async) + Alembic |
+| Embeddings       | Ollama `nomic-embed-text`    |
+| LLM              | Groq (OpenAI-compatible API) |
+| Containers       | Docker + Docker Compose      |
 
 ---
 
@@ -31,7 +31,8 @@ rag-docs-assistant/
 │   ├── schemas/
 │   │   └── document.py      # Pydantic request/response schemas
 │   ├── services/
-│   │   ├── embedding.py     # OpenAI embedding helpers
+│   │   ├── ai/              # Provider interfaces + concrete providers
+│   │   ├── embedding.py     # Embedding facade with retry
 │   │   └── rag.py           # Ingest, search, ask, CRUD logic
 │   └── api/v1/
 │       ├── router.py
@@ -59,13 +60,19 @@ rag-docs-assistant/
 
 ```bash
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Edit .env and add your GROQ_API_KEY
 ```
 
 ### 2. Start services
 
 ```bash
 docker compose up --build
+```
+
+Pull the embedding model in Ollama:
+
+```bash
+docker compose exec ollama ollama pull nomic-embed-text
 ```
 
 The API will be available at `http://localhost:8000`.  
@@ -90,6 +97,7 @@ docker compose exec api alembic upgrade head
 | `DELETE` | `/api/v1/documents/{id}`   | Delete a document                       |
 | `POST`   | `/api/v1/documents/search` | Semantic similarity search              |
 | `POST`   | `/api/v1/documents/ask`    | RAG: retrieve context + LLM answer      |
+| `POST`   | `/api/v1/documents/upload` | Upload file to MinIO and ingest content |
 
 ### Example: Ingest
 

@@ -13,9 +13,8 @@ pgvector==0.3.6
 pydantic==2.10.3
 pydantic-settings==2.7.0
 
-# AI / Embeddings
-openai==1.59.4
-tiktoken==0.8.0
+# AI providers
+# Ollama and Groq are accessed via HTTPX.
 
 # Object storage
 miniopy-async==1.23.4

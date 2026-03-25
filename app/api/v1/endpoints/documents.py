@@ -6,6 +6,7 @@ from typing import Annotated, Any
 
 import pypdf
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from tenacity import RetryError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -18,6 +19,13 @@ from app.schemas.document import (
     DocumentRead,
     SearchRequest,
     SearchResult,
+)
+from app.services.ai.exceptions import (
+    ChatConfigurationError,
+    ChatRateLimitError,
+    ChatServiceError,
+    EmbeddingRateLimitError,
+    EmbeddingServiceError,
 )
 from app.services import rag, storage
 
@@ -147,8 +155,24 @@ async def search(payload: SearchRequest, db: AsyncSession = Depends(get_db)):
 )
 async def ask(payload: AskRequest, db: AsyncSession = Depends(get_db)):
     """Retrieve relevant documents and generate a grounded answer."""
-    answer, sources = await rag.ask(db, question=payload.question, top_k=payload.top_k)
-    return AskResponse(answer=answer, sources=sources)
+    try:
+        answer, sources = await rag.ask(db, question=payload.question, top_k=payload.top_k)
+        return AskResponse(answer=answer, sources=sources)
+    except ChatConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Chat provider configuration error: {str(exc)}",
+        ) from exc
+    except ChatRateLimitError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Chat provider rate limited. Please try again later.",
+        ) from exc
+    except ChatServiceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Chat provider error: {str(exc)}",
+        ) from exc
 
 
 @router.post(
@@ -192,6 +216,36 @@ async def upload_document(
             metadata=meta_dict,
         )
         return doc
+    except RetryError as exc:
+        logger.exception("Embedding failed after max retries, deleting object %s", object_key)
+        await storage.delete_file(object_key)
+
+        inner_exc = exc.last_attempt.exception()
+        if isinstance(inner_exc, EmbeddingRateLimitError):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Embedding provider rate limited. Please try again later.",
+            ) from exc
+        if isinstance(inner_exc, EmbeddingServiceError):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Embedding provider error: {str(inner_exc)}",
+            ) from exc
+        raise
+    except EmbeddingRateLimitError as exc:
+        logger.exception("Embedding provider rate limit, deleting object %s", object_key)
+        await storage.delete_file(object_key)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Embedding provider rate limited. Please try again later.",
+        ) from exc
+    except EmbeddingServiceError as exc:
+        logger.exception("Embedding provider error, deleting object %s", object_key)
+        await storage.delete_file(object_key)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Embedding provider error: {str(exc)}",
+        ) from exc
     except Exception:
         logger.exception("Failed to ingest uploaded document, deleting object %s", object_key)
         await storage.delete_file(object_key)
