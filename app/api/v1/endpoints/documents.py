@@ -272,7 +272,7 @@ async def download_url(
     if not doc.storage_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No file stored for this document",
+            detail="No file stored for thi2s document",
         )
     url = await storage.presigned_download_url(doc.storage_key, expires_seconds=expires)
     return DownloadURLResponse(url=url, expires_in=expires)
