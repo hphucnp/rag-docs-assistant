@@ -1,13 +1,9 @@
-import io
-import json
 import logging
 import uuid
-from typing import Annotated, Any
+from typing import Annotated
 
-import pypdf
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from tenacity import RetryError
 
 from app.config import get_settings
 from app.database import get_db
@@ -25,61 +21,11 @@ from app.services.ai.exceptions import (
     ChatConfigurationError,
     ChatRateLimitError,
     ChatServiceError,
-    EmbeddingRateLimitError,
-    EmbeddingServiceError,
 )
-
-_TEXT_TYPES = {"text/plain", "text/markdown", "text/x-markdown"}
-_PDF_TYPES = {"application/pdf"}
-_ALLOWED_TYPES = _TEXT_TYPES | _PDF_TYPES
-_ALLOWED_EXTENSIONS = (".pdf", ".txt", ".md")
+from app.services.document_ingestion import ingest_uploaded_file, parse_metadata
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-
-def _parse_metadata(metadata: str | None) -> dict[str, Any]:
-    if metadata is None or metadata.strip() == "":
-        return {}
-    try:
-        value = json.loads(metadata)
-    except json.JSONDecodeError as exc:
-        raise HTTPException(status_code=422, detail="metadata must be valid JSON") from exc
-
-    if not isinstance(value, dict):
-        raise HTTPException(status_code=422, detail="metadata must be a JSON object")
-    return value
-
-
-def _validate_upload_payload(filename: str, content_type: str, size: int) -> None:
-    if size == 0:
-        raise HTTPException(status_code=422, detail="Uploaded file is empty")
-
-    max_size = settings.max_upload_size_mb * 1024 * 1024
-    if size > max_size:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File too large. Maximum size is {settings.max_upload_size_mb}MB",
-        )
-
-    ct_base = content_type.split(";")[0].strip().lower()
-    has_allowed_extension = filename.lower().endswith(_ALLOWED_EXTENSIONS)
-    if ct_base not in _ALLOWED_TYPES and not has_allowed_extension:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=f"Unsupported file type: {content_type}. Allowed: pdf, txt, md",
-        )
-
-
-def _extract_text(data: bytes, content_type: str, filename: str) -> str:
-    ct = content_type.split(";")[0].strip().lower()
-    if ct in _PDF_TYPES or filename.lower().endswith(".pdf"):
-        reader = pypdf.PdfReader(io.BytesIO(data))
-        pages = [p.extract_text() for p in reader.pages if p.extract_text()]
-        if not pages:
-            raise HTTPException(status_code=422, detail="Could not extract text from PDF")
-        return "\n\n".join(pages)
-    return data.decode("utf-8", errors="replace")
 
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
@@ -99,6 +45,8 @@ async def ingest(payload: DocumentIngest, db: AsyncSession = Depends(get_db)):
         content=payload.content,
         source_url=payload.source_url,
         metadata=payload.metadata,
+        doc_type=payload.doc_type,
+        use_chunking=payload.use_chunking,
     )
     return doc
 
@@ -188,71 +136,21 @@ async def upload_document(
     title: Annotated[str, Form(min_length=1, max_length=512)],
     source_url: Annotated[str | None, Form()] = None,
     metadata: Annotated[str | None, Form(description="JSON object string")] = None,
+    doc_type: Annotated[str, Form(description="'cv' or 'jd' for section-aware chunking")] = "cv",
+    use_chunking: Annotated[bool, Form(description="Whether to chunk the document")] = True,
     db: AsyncSession = Depends(get_db),
 ):
     """Upload a .pdf, .txt, or .md file to MinIO, extract its text, embed, and store."""
-    filename = file.filename
-    if not filename:
-        raise HTTPException(status_code=422, detail="filename is required")
-
-    content_type = file.content_type or "application/octet-stream"
-    data = await file.read()
-    _validate_upload_payload(filename, content_type, len(data))
-    meta_dict = _parse_metadata(metadata)
-
-    object_key = await storage.upload_file(data, filename, content_type)
-    try:
-        text = _extract_text(data, content_type, filename)
-    except HTTPException:
-        await storage.delete_file(object_key)
-        raise
-
-    try:
-        doc = await rag.ingest_document(
-            db,
-            title=title,
-            content=text,
-            source_url=source_url,
-            storage_key=object_key,
-            metadata=meta_dict,
-        )
-        return doc
-    except RetryError as exc:
-        logger.exception("Embedding failed after max retries, deleting object %s", object_key)
-        await storage.delete_file(object_key)
-
-        inner_exc = exc.last_attempt.exception()
-        if isinstance(inner_exc, EmbeddingRateLimitError):
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Embedding provider rate limited. Please try again later.",
-            ) from exc
-        if isinstance(inner_exc, EmbeddingServiceError):
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Embedding provider error: {str(inner_exc)}",
-            ) from exc
-        raise
-    except EmbeddingRateLimitError as exc:
-        logger.exception("Embedding provider rate limit, deleting object %s", object_key)
-        await storage.delete_file(object_key)
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Embedding provider rate limited. Please try again later.",
-        ) from exc
-    except EmbeddingServiceError as exc:
-        logger.exception("Embedding provider error, deleting object %s", object_key)
-        await storage.delete_file(object_key)
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Embedding provider error: {str(exc)}",
-        ) from exc
-    except Exception:
-        logger.exception("Failed to ingest uploaded document, deleting object %s", object_key)
-        await storage.delete_file(object_key)
-        raise
-    finally:
-        await file.close()
+    meta_dict = parse_metadata(metadata)
+    return await ingest_uploaded_file(
+        db,
+        file,
+        title=title,
+        doc_type=doc_type,
+        source_url=source_url,
+        metadata=meta_dict,
+        use_chunking=use_chunking,
+    )
 
 
 @router.get(

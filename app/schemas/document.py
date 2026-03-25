@@ -12,6 +12,15 @@ class DocumentIngest(BaseModel):
     content: str = Field(..., min_length=1, examples=["FastAPI is a modern web framework..."])
     source_url: str | None = Field(None, examples=["https://fastapi.tiangolo.com"])
     metadata: dict[str, Any] = Field(default_factory=dict)
+    doc_type: str = Field(
+        default="cv",
+        description="Document type for chunking, for example: 'cv', 'jd', or 'notes'",
+        examples=["cv", "jd", "notes"],
+    )
+    use_chunking: bool = Field(
+        default=True,
+        description="Whether to chunk the document into semantic sections",
+    )
 
 
 class DocumentRead(BaseModel):

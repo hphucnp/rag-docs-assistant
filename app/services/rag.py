@@ -6,10 +6,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
-from app.models.document import Document
+from app.models.document import Chunk, Document
 from app.schemas.document import SearchResult
 from app.services.ai.factory import get_chat_service
-from app.services.embedding import embed_text
+from app.services.chunking import chunk_by_sections
+from app.services.embedding import embed_batch, embed_text
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -23,22 +24,72 @@ async def ingest_document(
     source_url: str | None = None,
     storage_key: str | None = None,
     metadata: dict[str, Any] | None = None,
+    doc_type: str = "cv",
+    use_chunking: bool = True,
 ) -> Document:
-    """Ingest a document: generate its embedding and store it."""
-    embedding = await embed_text(content)
+    """
+    Ingest a document: optionally chunk it, generate embeddings, and store.
 
+    Args:
+        db: Database session
+        title: Document title
+        content: Document content
+        source_url: Optional source URL
+        storage_key: Optional storage reference (e.g., MinIO key)
+        metadata: Optional metadata dict
+        doc_type: "cv" or "jd" for section-aware chunking
+        use_chunking: Whether to chunk the document
+    """
+    # Create document record
     doc = Document(
         title=title,
         content=content,
         source_url=source_url,
         storage_key=storage_key,
         metadata_=metadata or {},
-        embedding=embedding,
     )
     db.add(doc)
+    await db.flush()  # Flush to get doc.id before adding chunks
+
+    if use_chunking:
+        # Chunk the document
+        chunks_data = chunk_by_sections(content, doc_type=doc_type, chunk_size=400)
+
+        # Extract texts and embed as batch
+        chunk_texts = [c.text for c in chunks_data]
+        embeddings = await embed_batch(chunk_texts)
+
+        # Create Chunk records
+        for chunk_data, embedding in zip(chunks_data, embeddings):
+            chunk = Chunk(
+                document_id=doc.id,
+                content=chunk_data.text,
+                section=chunk_data.section,
+                start_idx=chunk_data.start_idx,
+                end_idx=chunk_data.end_idx,
+                embedding=embedding,
+                metadata_={"doc_type": doc_type},
+            )
+            db.add(chunk)
+
+        logger.info("Chunked document id=%s into %d chunks", doc.id, len(chunks_data))
+    else:
+        # No chunking: embed full content as single chunk
+        embedding = await embed_text(content)
+        chunk = Chunk(
+            document_id=doc.id,
+            content=content,
+            section=None,
+            start_idx=0,
+            end_idx=len(content),
+            embedding=embedding,
+            metadata_={"doc_type": doc_type},
+        )
+        db.add(chunk)
+
     await db.commit()
     await db.refresh(doc)
-    logger.info("Ingested document id=%s title=%r", doc.id, doc.title)
+    logger.info("Ingested document id=%s title=%r with %d chunks", doc.id, doc.title, len(doc.chunks))
     return doc
 
 
@@ -47,20 +98,26 @@ async def similarity_search(
     *,
     query: str,
     top_k: int = 5,
+    document_ids: list[uuid.UUID] | None = None,
 ) -> list[SearchResult]:
-    """Return the top-k documents most similar to the query."""
+    """Return the top-k chunks most similar to the query."""
     query_embedding = await embed_text(query)
 
-    # cosine_distance returns 0 (identical) → 2 (opposite); similarity = 1 - distance/2
+    # Search chunks instead of documents
     stmt = (
         select(
+            Chunk,
             Document,
-            (1 - Document.embedding.cosine_distance(query_embedding)).label("score"),
+            (1 - Chunk.embedding.cosine_distance(query_embedding)).label("score"),
         )
-        .where(Document.embedding.is_not(None))
-        .order_by(Document.embedding.cosine_distance(query_embedding))
+        .join(Document, Chunk.document_id == Document.id)
+        .where(Chunk.embedding.is_not(None))
+        .order_by(Chunk.embedding.cosine_distance(query_embedding))
         .limit(top_k)
     )
+    if document_ids:
+        stmt = stmt.where(Document.id.in_(document_ids))
+
     result = await db.execute(stmt)
     rows = result.all()
 
@@ -68,11 +125,11 @@ async def similarity_search(
         SearchResult(
             id=doc.id,
             title=doc.title,
-            content=doc.content,
+            content=chunk.content,  # Use chunk content, not full doc content
             source_url=doc.source_url,
             score=round(float(score), 4),
         )
-        for doc, score in rows
+        for chunk, doc, score in rows
     ]
 
 
@@ -82,7 +139,7 @@ async def ask(
     question: str,
     top_k: int = 5,
 ) -> tuple[str, list[SearchResult]]:
-    """RAG pipeline: retrieve relevant docs, then generate an LLM answer."""
+    """RAG pipeline: retrieve relevant chunks, then generate an LLM answer."""
     sources = await similarity_search(db, query=question, top_k=top_k)
 
     context_blocks = "\n\n---\n\n".join(
