@@ -111,9 +111,7 @@ async def get_document(db: AsyncSession, document_id: uuid.UUID) -> Document | N
     return result.scalar_one_or_none()
 
 
-async def list_documents(
-    db: AsyncSession, *, offset: int = 0, limit: int = 20
-) -> list[Document]:
+async def list_documents(db: AsyncSession, *, offset: int = 0, limit: int = 20) -> list[Document]:
     result = await db.execute(
         select(Document).order_by(Document.created_at.desc()).offset(offset).limit(limit)
     )
@@ -129,5 +127,6 @@ async def delete_document(db: AsyncSession, document_id: uuid.UUID) -> bool:
     await db.commit()
     if storage_key:
         from app.services.storage import delete_file
+
         await delete_file(storage_key)
     return True

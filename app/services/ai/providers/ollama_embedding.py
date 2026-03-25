@@ -82,4 +82,6 @@ class OllamaEmbeddingService(EmbeddingService):
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         cleaned = [t.replace("\n", " ") for t in texts]
         embeddings = await self._request_embeddings(cleaned)
-        return [self._normalize_dimensions(vec, settings.embedding_dimensions) for vec in embeddings]
+        return [
+            self._normalize_dimensions(vec, settings.embedding_dimensions) for vec in embeddings
+        ]

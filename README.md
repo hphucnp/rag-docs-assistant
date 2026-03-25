@@ -12,8 +12,8 @@ Ingest documents, store their embeddings, perform semantic search, and ask natur
 | API              | FastAPI + Uvicorn            |
 | Vector DB        | PostgreSQL 16 + pgvector     |
 | ORM / Migrations | SQLAlchemy (async) + Alembic |
-| Embeddings       | Ollama `nomic-embed-text`    |
-| LLM              | Groq (OpenAI-compatible API) |
+| Embeddings       | Ollama / OpenAI / Cohere     |
+| LLM              | Groq / OpenAI                |
 | Containers       | Docker + Docker Compose      |
 
 ---
@@ -60,7 +60,23 @@ rag-docs-assistant/
 
 ```bash
 cp .env.example .env
-# Edit .env and add your GROQ_API_KEY
+# Edit .env and add keys based on selected providers
+```
+
+Provider switching is config-only:
+
+```bash
+# Option A: default (local + cheap)
+EMBEDDING_PROVIDER=ollama
+CHAT_PROVIDER=groq
+
+# Option B: OpenAI for both
+EMBEDDING_PROVIDER=openai
+CHAT_PROVIDER=openai
+
+# Option C: Cohere embeddings + Groq chat
+EMBEDDING_PROVIDER=cohere
+CHAT_PROVIDER=groq
 ```
 
 ### 2. Start services
@@ -120,16 +136,38 @@ curl -X POST http://localhost:8000/api/v1/documents/ask \
 ## Local Development (without Docker)
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+uv sync --group dev
 
 # Start Postgres separately, then:
-alembic upgrade head
-uvicorn app.main:app --reload
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
 ```
 
 ## Running Tests
 
 ```bash
-pytest
+uv run pytest
+```
+
+## Package Management (uv)
+
+```bash
+# Add a runtime dependency
+uv add <package>
+
+# Add a development dependency
+uv add --dev <package>
+
+# Remove a dependency
+uv remove <package>
+
+# Regenerate lockfile after dependency changes
+uv lock
+```
+
+## Linting (Ruff)
+
+```bash
+uv run ruff check .
+uv run ruff format .
 ```

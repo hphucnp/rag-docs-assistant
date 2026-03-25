@@ -1,9 +1,9 @@
 from app.schemas.document import (
     AskRequest,
     AskResponse,
-    DownloadURLResponse,
     DocumentIngest,
     DocumentRead,
+    DownloadURLResponse,
     SearchRequest,
     SearchResult,
 )

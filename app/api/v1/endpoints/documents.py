@@ -6,20 +6,21 @@ from typing import Annotated, Any
 
 import pypdf
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from tenacity import RetryError
 from sqlalchemy.ext.asyncio import AsyncSession
+from tenacity import RetryError
 
 from app.config import get_settings
 from app.database import get_db
 from app.schemas.document import (
     AskRequest,
     AskResponse,
-    DownloadURLResponse,
     DocumentIngest,
     DocumentRead,
+    DownloadURLResponse,
     SearchRequest,
     SearchResult,
 )
+from app.services import rag, storage
 from app.services.ai.exceptions import (
     ChatConfigurationError,
     ChatRateLimitError,
@@ -27,7 +28,6 @@ from app.services.ai.exceptions import (
     EmbeddingRateLimitError,
     EmbeddingServiceError,
 )
-from app.services import rag, storage
 
 _TEXT_TYPES = {"text/plain", "text/markdown", "text/x-markdown"}
 _PDF_TYPES = {"application/pdf"}
@@ -80,6 +80,7 @@ def _extract_text(data: bytes, content_type: str, filename: str) -> str:
             raise HTTPException(status_code=422, detail="Could not extract text from PDF")
         return "\n\n".join(pages)
     return data.decode("utf-8", errors="replace")
+
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 

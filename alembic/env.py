@@ -2,17 +2,17 @@ import os
 import sys
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+from alembic import context
 
 # Make sure `app` is importable
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.config import get_settings
-from app.database import Base
-
 # Import models so Alembic can detect them
 import app.models  # noqa: F401
+from app.config import get_settings
+from app.database import Base
 
 settings = get_settings()
 

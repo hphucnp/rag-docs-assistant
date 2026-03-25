@@ -1,5 +1,12 @@
 from app.services.embedding import embed_batch, embed_text
-from app.services.rag import ask, delete_document, get_document, ingest_document, list_documents, similarity_search
+from app.services.rag import (
+    ask,
+    delete_document,
+    get_document,
+    ingest_document,
+    list_documents,
+    similarity_search,
+)
 
 __all__ = [
     "embed_text",

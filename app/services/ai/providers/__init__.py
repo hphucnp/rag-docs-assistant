@@ -1,1 +1,7 @@
-__all__ = ["groq_chat", "ollama_embedding"]
+__all__ = [
+    "cohere_embedding",
+    "groq_chat",
+    "ollama_embedding",
+    "openai_chat",
+    "openai_embedding",
+]

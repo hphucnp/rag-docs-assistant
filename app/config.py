@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     # Ollama embedding
     ollama_base_url: str = "http://localhost:11434"
 
+    # OpenAI
+    openai_api_key: Optional[str] = None
+    openai_base_url: str = "https://api.openai.com/v1"
+
+    # Cohere
+    cohere_api_key: Optional[str] = None
+    cohere_base_url: str = "https://api.cohere.com/v2"
+
     # Embedding
     embedding_model: str = "nomic-embed-text"
     embedding_dimensions: int = 1536
