@@ -93,6 +93,7 @@ docker compose exec ollama ollama pull nomic-embed-text
 
 The API will be available at `http://localhost:8000`.  
 Interactive docs: `http://localhost:8000/docs`
+Demo UI: `http://localhost:8000/demo`
 
 ### 3. Run migrations
 
@@ -104,16 +105,43 @@ docker compose exec api alembic upgrade head
 
 ## API Endpoints
 
-| Method   | Path                       | Description                             |
-| -------- | -------------------------- | --------------------------------------- |
-| `GET`    | `/health`                  | Health check                            |
-| `POST`   | `/api/v1/documents/ingest` | Ingest a document (generates embedding) |
-| `GET`    | `/api/v1/documents/`       | List all documents                      |
-| `GET`    | `/api/v1/documents/{id}`   | Get a document by ID                    |
-| `DELETE` | `/api/v1/documents/{id}`   | Delete a document                       |
-| `POST`   | `/api/v1/documents/search` | Semantic similarity search              |
-| `POST`   | `/api/v1/documents/ask`    | RAG: retrieve context + LLM answer      |
-| `POST`   | `/api/v1/documents/upload` | Upload file to MinIO and ingest content |
+| Method   | Path                                   | Description                             |
+| -------- | -------------------------------------- | --------------------------------------- |
+| `GET`    | `/health`                              | Health check                            |
+| `POST`   | `/api/v1/documents/ingest`             | Ingest a document (generates embedding) |
+| `GET`    | `/api/v1/documents/`                   | List all documents                      |
+| `GET`    | `/api/v1/documents/{id}`               | Get a document by ID                    |
+| `DELETE` | `/api/v1/documents/{id}`               | Delete a document                       |
+| `POST`   | `/api/v1/documents/search`             | Semantic similarity search              |
+| `POST`   | `/api/v1/documents/ask`                | RAG: retrieve context + LLM answer      |
+| `POST`   | `/api/v1/documents/upload`             | Upload file to MinIO and ingest content |
+| `POST`   | `/api/v1/match/upload-bundle`          | Upload CV + JD + optional notes         |
+| `POST`   | `/api/v1/match/missing-skills`         | Compare CV vs JD for skill gaps         |
+| `POST`   | `/api/v1/match/rewrite-summary`        | Rewrite summary for target job          |
+| `POST`   | `/api/v1/match/highlight-achievements` | Pick the best achievements              |
+
+## Demo UI
+
+Open `http://localhost:8000/demo` to run the end-to-end CV/JD matching demo.
+
+Flow:
+
+1. Upload a CV file and a JD file
+2. Optionally add notes such as recruiter context or what to emphasize
+3. Click the three actions to generate:
+
+- missing skills
+- rewritten summary
+- achievements to highlight
+
+The demo page calls these APIs under the hood:
+
+```bash
+POST /api/v1/match/upload-bundle
+POST /api/v1/match/missing-skills?cv_id=...&jd_id=...&notes_id=...
+POST /api/v1/match/rewrite-summary?cv_id=...&jd_id=...&notes_id=...
+POST /api/v1/match/highlight-achievements?cv_id=...&jd_id=...&notes_id=...
+```
 
 ### Example: Ingest
 

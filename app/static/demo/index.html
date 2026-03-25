@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CV Job Match Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/demo/style.css" />
+  </head>
+  <body>
+    <div class="background-grid" aria-hidden="true"></div>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">RAG demo</p>
+        <h1>CV / Job Description Match</h1>
+        <p class="hero-copy">
+          Upload a resume, a job description, and optional notes. Then generate the three
+          recruiter-facing outputs you actually want to demo.
+        </p>
+        <div class="hero-pills">
+          <span>Missing skills</span>
+          <span>Rewrite summary</span>
+          <span>Highlight achievements</span>
+        </div>
+      </section>
+
+      <section class="panel upload-panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Step 1</p>
+            <h2>Upload Bundle</h2>
+          </div>
+          <p class="panel-meta">POST /api/v1/match/upload-bundle</p>
+        </div>
+
+        <form id="bundle-form" class="bundle-form">
+          <label class="file-field">
+            <span>CV file</span>
+            <input type="file" name="cv_file" accept=".pdf,.txt,.md" required />
+          </label>
+
+          <label class="file-field">
+            <span>Job description file</span>
+            <input type="file" name="jd_file" accept=".pdf,.txt,.md" required />
+          </label>
+
+          <label>
+            <span>CV title</span>
+            <input type="text" name="cv_title" value="Candidate Resume" />
+          </label>
+
+          <label>
+            <span>JD title</span>
+            <input type="text" name="jd_title" value="Target Job Description" />
+          </label>
+
+          <label class="full-width">
+            <span>Notes</span>
+            <textarea
+              name="notes"
+              rows="4"
+              placeholder="Optional: recruiter notes, target story, skills to emphasize, salary concerns..."
+            ></textarea>
+          </label>
+
+          <button id="upload-button" type="submit" class="primary-button">Upload bundle</button>
+        </form>
+
+        <div id="upload-status" class="status-box muted">No files uploaded yet.</div>
+      </section>
+
+      <section class="panel action-panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Step 2</p>
+            <h2>Generate Match Outputs</h2>
+          </div>
+          <p class="panel-meta">Powered by the stored CV / JD / notes IDs</p>
+        </div>
+
+        <div class="id-grid">
+          <label>
+            <span>CV ID</span>
+            <input id="cv-id" type="text" placeholder="Generated after upload" />
+          </label>
+          <label>
+            <span>JD ID</span>
+            <input id="jd-id" type="text" placeholder="Generated after upload" />
+          </label>
+          <label>
+            <span>Notes ID</span>
+            <input id="notes-id" type="text" placeholder="Optional" />
+          </label>
+        </div>
+
+        <label class="full-width summary-field">
+          <span>Current summary</span>
+          <textarea
+            id="current-summary"
+            rows="3"
+            placeholder="Optional: paste the candidate's current CV summary before rewriting"
+          ></textarea>
+        </label>
+
+        <div class="action-grid">
+          <button type="button" class="secondary-button" data-action="missing-skills">
+            What skills are missing?
+          </button>
+          <button type="button" class="secondary-button" data-action="rewrite-summary">
+            Rewrite summary for this job
+          </button>
+          <button type="button" class="secondary-button" data-action="highlight-achievements">
+            Which achievements should I highlight?
+          </button>
+        </div>
+      </section>
+
+      <section class="results-grid">
+        <article class="panel result-panel">
+          <div class="panel-header compact">
+            <h3>Missing Skills</h3>
+            <span class="mono">/missing-skills</span>
+          </div>
+          <pre id="missing-skills-output" class="output-box">Run the analysis to see missing skills.</pre>
+        </article>
+
+        <article class="panel result-panel">
+          <div class="panel-header compact">
+            <h3>Rewritten Summary</h3>
+            <span class="mono">/rewrite-summary</span>
+          </div>
+          <pre id="rewrite-summary-output" class="output-box">Run the analysis to rewrite the summary.</pre>
+        </article>
+
+        <article class="panel result-panel full-span">
+          <div class="panel-header compact">
+            <h3>Achievements to Highlight</h3>
+            <span class="mono">/highlight-achievements</span>
+          </div>
+          <pre id="highlight-achievements-output" class="output-box">Run the analysis to see recommended achievements.</pre>
+        </article>
+      </section>
+    </main>
+
+    <script src="/static/demo/app.js" defer></script>
+  </body>
+</html>
