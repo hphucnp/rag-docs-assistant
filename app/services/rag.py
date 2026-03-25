@@ -40,6 +40,8 @@ async def ingest_document(
         doc_type: "cv" or "jd" for section-aware chunking
         use_chunking: Whether to chunk the document
     """
+    chunk_count = 0
+
     # Create document record
     doc = Document(
         title=title,
@@ -54,6 +56,7 @@ async def ingest_document(
     if use_chunking:
         # Chunk the document
         chunks_data = chunk_by_sections(content, doc_type=doc_type, chunk_size=400)
+        chunk_count = len(chunks_data)
 
         # Extract texts and embed as batch
         chunk_texts = [c.text for c in chunks_data]
@@ -72,9 +75,10 @@ async def ingest_document(
             )
             db.add(chunk)
 
-        logger.info("Chunked document id=%s into %d chunks", doc.id, len(chunks_data))
+        logger.info("Chunked document id=%s into %d chunks", doc.id, chunk_count)
     else:
         # No chunking: embed full content as single chunk
+        chunk_count = 1
         embedding = await embed_text(content)
         chunk = Chunk(
             document_id=doc.id,
@@ -89,7 +93,7 @@ async def ingest_document(
 
     await db.commit()
     await db.refresh(doc)
-    logger.info("Ingested document id=%s title=%r with %d chunks", doc.id, doc.title, len(doc.chunks))
+    logger.info("Ingested document id=%s title=%r with %d chunks", doc.id, doc.title, chunk_count)
     return doc
 
 
