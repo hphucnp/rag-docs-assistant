@@ -3,30 +3,30 @@ name = "rag-docs-assistant"
 version = "0.1.0"
 description = "RAG API with FastAPI, pgvector, Ollama/Groq provider abstraction"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
-	"fastapi==0.115.6",
-	"uvicorn[standard]==0.32.1",
-	"sqlalchemy==2.0.36",
-	"greenlet>=3.0.0",
-	"asyncpg==0.30.0",
-	"psycopg2-binary==2.9.10",
-	"alembic==1.14.0",
-	"pgvector==0.3.6",
-	"pydantic==2.10.3",
-	"pydantic-settings==2.7.0",
-	"miniopy-async==1.23.4",
-	"pypdf==5.1.0",
-	"python-multipart==0.0.20",
-	"httpx==0.28.1",
-	"tenacity==9.0.0",
+	"fastapi",
+	"uvicorn[standard]",
+	"sqlalchemy",
+	"greenlet",
+	"asyncpg",
+	"psycopg2-binary",
+	"alembic",
+	"pgvector",
+	"pydantic",
+	"pydantic-settings",
+	"miniopy-async",
+	"pypdf",
+	"python-multipart",
+	"httpx",
+	"tenacity",
 ]
 
 [dependency-groups]
 dev = [
-	"pytest==8.3.4",
-	"pytest-asyncio==0.24.0",
-	"ruff==0.12.10",
+	"pytest",
+	"pytest-asyncio",
+	"ruff",
 ]
 
 [tool.uv]
@@ -38,7 +38,7 @@ asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 100
 exclude = [
 	"alembic/versions",

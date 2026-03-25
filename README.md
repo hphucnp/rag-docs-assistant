@@ -135,6 +135,8 @@ curl -X POST http://localhost:8000/api/v1/documents/ask \
 
 ## Local Development (without Docker)
 
+Python requirement: 3.13+
+
 ```bash
 uv sync --group dev
 
