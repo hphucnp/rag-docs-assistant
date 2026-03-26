@@ -39,3 +39,7 @@ alembic/versions/__pycache__/
 # Misc
 .DS_Store
 *.log
+node_modules/
+frontend/node_modules/
+frontend/dist/
+app/static/demo_app/

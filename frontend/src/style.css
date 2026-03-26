@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  body {
+    @apply min-h-screen bg-sand text-ink antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(200, 91, 52, 0.18), transparent 28%),
+      radial-gradient(circle at bottom right, rgba(31, 95, 69, 0.14), transparent 26%),
+      linear-gradient(180deg, #f8f2e8 0%, #f3ecdf 100%);
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+
+  ::selection {
+    background: rgba(200, 91, 52, 0.2);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-panel backdrop-blur-xl;
+  }
+
+  .field-shell {
+    @apply w-full rounded-2xl border border-black/10 bg-white/75 px-4 py-3 text-sm text-ink transition duration-150 placeholder:text-black/35 focus:border-ember/40 focus:bg-white focus:outline-none;
+  }
+
+  .ghost-button {
+    @apply rounded-2xl border border-black/10 bg-haze px-4 py-4 text-left text-sm font-bold text-ink transition duration-150 hover:-translate-y-0.5 hover:border-black/20 disabled:translate-y-0 disabled:cursor-progress disabled:opacity-55;
+  }
+
+  .primary-button {
+    @apply rounded-2xl bg-gradient-to-br from-ember to-orange-400 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-ember/25 transition duration-150 hover:-translate-y-0.5 disabled:translate-y-0 disabled:cursor-progress disabled:opacity-55;
+  }
+
+  .result-box {
+    @apply min-h-[260px] whitespace-pre-wrap rounded-3xl border border-black/10 bg-white/60 p-5 text-sm leading-7 text-ink/85;
+  }
+
+  .grid-fade {
+    background-image:
+      linear-gradient(rgba(29, 26, 23, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(29, 26, 23, 0.045) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 86%);
+  }
+}

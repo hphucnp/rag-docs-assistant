@@ -1,3 +1,18 @@
+FROM node:22-alpine AS frontend-builder
+
+WORKDIR /frontend
+
+COPY frontend/package.json ./
+COPY frontend/postcss.config.js ./
+COPY frontend/tailwind.config.js ./
+COPY frontend/vite.config.js ./
+COPY frontend/index.html ./
+COPY frontend/src ./src
+
+RUN npm install
+RUN mkdir -p /app/static
+RUN npm run build
+
 FROM python:3.13-slim
 
 WORKDIR /app
@@ -14,6 +29,7 @@ COPY pyproject.toml uv.lock* ./
 RUN uv sync --frozen --group dev
 
 COPY . .
+COPY --from=frontend-builder /app/static/demo_app ./app/static/demo_app
 
 EXPOSE 8000
 

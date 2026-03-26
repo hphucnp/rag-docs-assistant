@@ -176,6 +176,43 @@ POST /api/v1/match/rewrite-summary?cv_id=...&jd_id=...&notes_id=...
 POST /api/v1/match/highlight-achievements?cv_id=...&jd_id=...&notes_id=...
 ```
 
+## Vue Frontend
+
+A Vue + Vite + Tailwind frontend is available in [`frontend/`](./frontend) and mirrors the existing demo workflow with a dedicated dev server.
+
+```bash
+cd frontend
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+By default, Vite proxies `/api` requests to `http://localhost:8000`, so you can run the FastAPI backend and the Vue app side by side during development.
+
+For Docker Compose development, use the `frontend` service. It runs the Vite dev server on `http://localhost:5173` and proxies API traffic to the `api` container:
+
+```bash
+docker compose up frontend api
+```
+
+If Caddy is running too, `http://localhost:80` serves the frontend and forwards `/api/*`, `/docs`, `/redoc`, and `/health` to the backend. `http://localhost:8000` remains backend-only. Local Docker Compose no longer binds `:443`; keep HTTPS/TLS only for production deployment.
+
+If your API is on another host, create `frontend/.env.local`:
+
+```bash
+VITE_API_BASE_URL=https://your-api-host
+VITE_DEV_PROXY_TARGET=http://localhost:8000
+```
+
+To build the frontend assets separately:
+
+```bash
+cd frontend
+npm run build
+```
+
+This writes the production bundle to `app/static/demo_app/`. The Docker image still includes that bundle, but in local Compose development the frontend is served through the dedicated `frontend` service and Caddy on port `80`.
+
 ### Example: Ingest
 
 ```bash

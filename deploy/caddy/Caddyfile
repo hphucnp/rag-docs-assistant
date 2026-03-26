@@ -1,10 +1,10 @@
-{
-    email {$ACME_EMAIL}
-}
-
-{$APP_DOMAIN} {
+:80 {
     encode zstd gzip
 
-    # Forward all traffic to FastAPI container
-    reverse_proxy api:8000
+    @backend {
+        path /api/* /docs /redoc /openapi.json /health
+    }
+
+    reverse_proxy @backend api:8000
+    reverse_proxy frontend:5173
 }
