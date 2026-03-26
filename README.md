@@ -85,6 +85,12 @@ CHAT_PROVIDER=groq
 docker compose up --build
 ```
 
+For detached mode (recommended on servers):
+
+```bash
+docker compose up -d --build
+```
+
 Pull the embedding model in Ollama:
 
 ```bash
@@ -95,11 +101,38 @@ The API will be available at `http://localhost:8000`.
 Interactive docs: `http://localhost:8000/docs`
 Demo UI: `http://localhost:8000/demo`
 
+If Caddy is enabled (default in `docker-compose.yml`), use your domain over HTTPS:
+
+- API: `https://<your-domain>`
+- Docs: `https://<your-domain>/docs`
+- Demo UI: `https://<your-domain>/demo`
+
 ### 3. Run migrations
 
 ```bash
 docker compose exec api alembic upgrade head
 ```
+
+### 4. Configure HTTPS (Caddy)
+
+Before running on a public server, set these values in `.env`:
+
+```bash
+APP_DOMAIN=rag.example.com
+ACME_EMAIL=you@example.com
+```
+
+Requirements:
+
+- DNS `A` record of `APP_DOMAIN` points to your server IP
+- Ports `80` and `443` are open in firewall/security group
+
+Caddy will automatically provision and renew TLS certificates from Let's Encrypt.
+
+### 5. Use Squid proxy (optional)
+
+Squid listens on `3128` and is restricted to private networks by default.
+If you need external access, update `deploy/squid/squid.conf` ACL rules before exposing port `3128` publicly.
 
 ---
 

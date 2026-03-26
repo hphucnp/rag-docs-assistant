@@ -1,0 +1,10 @@
+{
+    email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN} {
+    encode zstd gzip
+
+    # Forward all traffic to FastAPI container
+    reverse_proxy api:8000
+}

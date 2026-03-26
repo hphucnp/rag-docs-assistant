@@ -72,7 +72,42 @@ services:
       - .:/app
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  caddy:
+    image: caddy:2.9-alpine
+    container_name: rag_caddy
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  squid:
+    image: ubuntu/squid:latest
+    container_name: rag_squid
+    restart: unless-stopped
+    ports:
+      - "3128:3128"
+    volumes:
+      - ./deploy/squid/squid.conf:/etc/squid/squid.conf:ro
+      - squid_cache:/var/spool/squid
+      - squid_logs:/var/log/squid
+    healthcheck:
+      test: ["CMD-SHELL", "squid -k parse -f /etc/squid/squid.conf >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   postgres_data:
   minio_data:
   ollama_data:
+  caddy_data:
+  caddy_config:
+  squid_cache:
+  squid_logs:
