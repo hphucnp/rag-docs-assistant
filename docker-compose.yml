@@ -59,6 +59,7 @@ services:
       POSTGRES_HOST: db
       MINIO_HOST: minio
       OLLAMA_BASE_URL: http://ollama:11434
+      UVICORN_RELOAD: "true"
     ports:
       - "8000:8000"
     depends_on:
@@ -70,7 +71,7 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh ./scripts/start-backend.sh
 
   frontend:
     image: node:22-alpine

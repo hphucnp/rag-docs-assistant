@@ -33,4 +33,4 @@ COPY --from=frontend-builder /app/static/demo_app ./app/static/demo_app
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "./scripts/start-backend.sh"]
