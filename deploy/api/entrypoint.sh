@@ -8,7 +8,7 @@ DB_USER="${POSTGRES_USER:-rag_user}"
 MAX_TRIES="${DB_READY_MAX_TRIES:-60}"
 SLEEP_SECONDS="${DB_READY_SLEEP_SECONDS:-2}"
 
-echo "[start-backend] Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
+echo "[entrypoint] Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
 
 attempt=1
 while [ "$attempt" -le "$MAX_TRIES" ]; do
@@ -32,24 +32,24 @@ async def main() -> None:
 
 asyncio.run(main())
 ' >/dev/null 2>&1; then
-    echo "[start-backend] PostgreSQL is ready."
+    echo "[entrypoint] PostgreSQL is ready."
     break
   fi
 
-  echo "[start-backend] PostgreSQL not ready yet (attempt ${attempt}/${MAX_TRIES})."
+  echo "[entrypoint] PostgreSQL not ready yet (attempt ${attempt}/${MAX_TRIES})."
   attempt=$((attempt + 1))
   sleep "$SLEEP_SECONDS"
 done
 
 if [ "$attempt" -gt "$MAX_TRIES" ]; then
-  echo "[start-backend] PostgreSQL did not become ready in time."
+  echo "[entrypoint] PostgreSQL did not become ready in time."
   exit 1
 fi
 
-echo "[start-backend] Running Alembic migrations..."
+echo "[entrypoint] Running Alembic migrations..."
 uv run alembic upgrade head
 
-echo "[start-backend] Starting Uvicorn..."
+echo "[entrypoint] Starting Uvicorn..."
 
 if [ "${UVICORN_RELOAD:-false}" = "true" ] || [ "${UVICORN_RELOAD:-0}" = "1" ]; then
   exec uv run uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" --reload

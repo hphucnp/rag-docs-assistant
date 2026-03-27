@@ -33,4 +33,4 @@ COPY --from=frontend-builder /app/static/demo_app ./app/static/demo_app
 
 EXPOSE 8000
 
-CMD ["sh", "./scripts/start-backend.sh"]
+CMD ["sh", "./deploy/api/entrypoint.sh"]

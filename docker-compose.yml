@@ -74,7 +74,7 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-    command: sh ./scripts/start-backend.sh
+    command: sh ./deploy/api/entrypoint.sh
 
   frontend:
     image: node:22-alpine
