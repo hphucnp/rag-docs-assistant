@@ -99,13 +99,19 @@ docker compose exec ollama ollama pull nomic-embed-text
 
 The API will be available at `http://localhost:8000`.  
 Interactive docs: `http://localhost:8000/docs`
-Demo UI: `http://localhost:8000/demo`
+Frontend via Caddy: `http://localhost`
 
-If Caddy is enabled (default in `docker-compose.yml`), use your domain over HTTPS:
+For production on a public server, use the production compose file:
 
-- API: `https://<your-domain>`
-- Docs: `https://<your-domain>/docs`
-- Demo UI: `https://<your-domain>/demo`
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+With the domain setup below, public endpoints become:
+
+- Frontend: `https://rag.beestack.vn`
+- API: `https://api.beestack.vn`
+- Docs: `https://api.beestack.vn/docs`
 
 ### 3. Run migrations
 
@@ -115,19 +121,21 @@ docker compose exec api alembic upgrade head
 
 ### 4. Configure HTTPS (Caddy)
 
-Before running on a public server, set these values in `.env`:
+Before running production on DigitalOcean, set these values in `.env`:
 
 ```bash
-APP_DOMAIN=rag.example.com
-ACME_EMAIL=you@example.com
+FRONTEND_DOMAIN=rag.beestack.vn
+API_DOMAIN=api.beestack.vn
+ACME_EMAIL=you@beestack.vn
 ```
 
 Requirements:
 
-- DNS `A` record of `APP_DOMAIN` points to your server IP
+- DNS `A` record of `rag.beestack.vn` points to your server IP
+- DNS `A` record of `api.beestack.vn` points to your server IP
 - Ports `80` and `443` are open in firewall/security group
 
-Caddy will automatically provision and renew TLS certificates from Let's Encrypt.
+The production override uses [`deploy/caddy/Caddyfile.production`](./deploy/caddy/Caddyfile.production). Caddy will automatically provision and renew TLS certificates from Let's Encrypt.
 
 ### 5. Use Squid proxy (optional)
 
@@ -197,7 +205,33 @@ docker compose up frontend api
 
 If Caddy is running too, `http://localhost:80` serves the frontend and forwards `/api/*`, `/docs`, `/redoc`, and `/health` to the backend. `http://localhost:8000` remains backend-only. Local Docker Compose no longer binds `:443`; keep HTTPS/TLS only for production deployment.
 
-If your API is on another host, create `frontend/.env.local`:
+For production on DigitalOcean with HTTPS, use the production override and [`deploy/caddy/Caddyfile.production`](./deploy/caddy/Caddyfile.production). For your domain layout:
+
+- frontend: `rag.beestack.vn`
+- backend: `api.beestack.vn`
+
+Set these values in `.env` on the server:
+
+```bash
+FRONTEND_DOMAIN=rag.beestack.vn
+API_DOMAIN=api.beestack.vn
+ACME_EMAIL=you@beestack.vn
+```
+
+Required DNS records in DigitalOcean:
+
+- `A rag.beestack.vn -> <your-droplet-ip>`
+- `A api.beestack.vn -> <your-droplet-ip>`
+
+Start production on the Droplet with:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Production Caddy publishes ports `80` and `443`, routes `rag.beestack.vn` to the frontend container, and routes `api.beestack.vn` to the FastAPI container.
+
+If your API is on another host in local dev, create `frontend/.env.local`:
 
 ```bash
 VITE_API_BASE_URL=https://your-api-host

@@ -1,0 +1,119 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: rag_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rag_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag_password}
+      POSTGRES_DB: ${POSTGRES_DB:-rag_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rag_user} -d ${POSTGRES_DB:-rag_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: rag_minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-rag_minio_user}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-rag_minio_secret}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address :9001
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:0.18.3-rc1
+    container_name: rag_ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: rag_api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      MINIO_HOST: minio
+      OLLAMA_BASE_URL: http://ollama:11434
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  frontend:
+    image: node:22-alpine
+    container_name: rag_frontend
+    restart: unless-stopped
+    working_dir: /frontend
+    environment:
+      VITE_API_BASE_URL: https://${API_DOMAIN}
+      VITE_ALLOWED_HOSTS: ${FRONTEND_DOMAIN}
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/frontend
+      - frontend_node_modules:/frontend/node_modules
+    command: sh -c "npm install && npm run build && npm run preview -- --host 0.0.0.0 --port 4173"
+
+  caddy:
+    image: caddy:2.9-alpine
+    container_name: rag_caddy
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+      - frontend
+    volumes:
+      - ./deploy/caddy/Caddyfile.production:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  squid:
+    image: ubuntu/squid:latest
+    container_name: rag_squid
+    restart: unless-stopped
+    ports:
+      - "3128:3128"
+    volumes:
+      - ./deploy/squid/squid.conf:/etc/squid/squid.conf:ro
+      - squid_cache:/var/spool/squid
+      - squid_logs:/var/log/squid
+    healthcheck:
+      test: ["CMD-SHELL", "squid -k parse -f /etc/squid/squid.conf >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  minio_data:
+  ollama_data:
+  frontend_node_modules:
+  caddy_data:
+  caddy_config:
+  squid_cache:
+  squid_logs:
