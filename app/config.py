@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     # App
     app_env: str = "development"
     log_level: str = "INFO"
+    cors_allowed_origins: str = "http://localhost,http://localhost:5173,https://rag.beestack.vn"
 
     # PostgreSQL
     postgres_user: str = "rag_user"
