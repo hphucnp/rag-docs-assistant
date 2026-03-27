@@ -32,9 +32,12 @@ services:
       retries: 5
 
   ollama:
-    image: ollama/ollama:0.18.3-rc1
+    build: ./deploy/ollama
     container_name: rag_ollama
     restart: unless-stopped
+    env_file: .env
+    environment:
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
