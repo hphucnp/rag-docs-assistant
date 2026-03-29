@@ -4,7 +4,10 @@
 
 {$FRONTEND_DOMAIN} {
     encode zstd gzip
-    reverse_proxy frontend:4173
+
+    root * /srv/frontend
+    try_files {path} /index.html
+    file_server
 }
 
 {$API_DOMAIN} {
