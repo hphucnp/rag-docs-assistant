@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     cors_allowed_origins: str = "http://localhost,http://localhost:5173,https://rag.beestack.vn"
 
+    # GitHub webhook
+    github_webhook_enabled: bool = False
+    github_webhook_secret: Optional[str] = None
+    github_webhook_repo_path: str = "."
+    github_webhook_branch: str = "main"
+
     # PostgreSQL
     postgres_user: str = "rag_user"
     postgres_password: str = "rag_password"
