@@ -30,7 +30,6 @@ It also includes a focused CV / Job Description matching workflow with a Vue fro
 - [Vue Frontend](#vue-frontend)
 - [Local Development](#local-development-without-docker)
 - [Running Tests](#running-tests)
-- [Troubleshooting](#troubleshooting)
 - [Security Notes](#security-notes)
 
 ---
@@ -296,7 +295,7 @@ The code currently supports self-hosted Ollama for embeddings, but not yet as a 
 
 ## Demo UI
 
-Open `http://localhost:8000/demo` to run the end-to-end CV/JD matching demo.
+Open `http://localhost` to run the end-to-end CV/JD matching demo locally.
 
 Flow:
 
@@ -432,35 +431,6 @@ uv run uvicorn app.main:app --reload
 ```bash
 uv run pytest
 ```
-
-## Troubleshooting
-
-### Frontend changes do not appear in production
-
-If you are deploying with `docker-compose.prod.yml`, rebuild and restart the production stack so the new frontend bundle is generated and served:
-
-```bash
-docker compose -f docker-compose.prod.yml down
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-If the site still serves old assets, clear the frontend build volume and redeploy.
-
-### Production frontend logs show `URIError: URI malformed`
-
-Do not serve production traffic through `vite preview`. This repo's production setup uses Caddy to serve the built static frontend directly, which avoids that class of issue.
-
-### Model errors from Groq or OpenAI
-
-Check that:
-
-- `CHAT_PROVIDER` matches the provider you intend to use
-- `LLM_MODEL` is valid for that provider
-- the corresponding API key is set
-
-### CORS errors in browser requests
-
-Update `CORS_ALLOWED_ORIGINS` to include the exact frontend origin that calls the API.
 
 ## Security Notes
 
