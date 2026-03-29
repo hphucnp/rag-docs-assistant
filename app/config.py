@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     # Groq LLM
     groq_api_key: Optional[str] = None
     groq_base_url: str = "https://api.groq.com/openai/v1"
-    llm_model: str = "llama-3.1-8b-instant"
+    llm_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
 
     # MinIO
     minio_host: str = "localhost"

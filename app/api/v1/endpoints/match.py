@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.database import get_db
 from app.services import rag
 from app.services.ai.factory import get_chat_service
@@ -14,6 +15,7 @@ from app.services.document_ingestion import ingest_uploaded_file
 from app.services.rag import ingest_document, similarity_search
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 router = APIRouter(prefix="/match", tags=["match"])
 
@@ -255,7 +257,7 @@ List them as a comma-separated list with brief explanations."""
     missing_skills_analysis = await chat_service.generate(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
-        model="llama-3.1-8b-instant",
+        model=settings.llm_model,
         temperature=0.3,
     )
 
@@ -327,7 +329,7 @@ true to the candidate's actual experience."""
     new_summary = await chat_service.generate(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
-        model="llama-3.1-8b-instant",
+        model=settings.llm_model,
         temperature=0.4,
     )
 
@@ -394,7 +396,7 @@ Which achievements should this candidate highlight for this position? Explain th
     achievements_to_highlight = await chat_service.generate(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
-        model="llama-3.1-8b-instant",
+        model=settings.llm_model,
         temperature=0.3,
     )
 
