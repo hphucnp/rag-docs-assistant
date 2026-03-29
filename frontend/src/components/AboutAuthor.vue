@@ -36,13 +36,34 @@
         <div class="mt-4 space-y-4 text-sm text-black/70">
           <div>
             <p class="text-black/45">Email</p>
-            <a class="inline-block pt-1 font-semibold text-ink underline decoration-ember/40 underline-offset-4" href="mailto:hphuc.np@gmail.com">
+            <a
+              class="inline-block pt-1 font-semibold text-ink underline decoration-ember/40 underline-offset-4"
+              href="mailto:hphuc.np@gmail.com"
+            >
               hphuc.np@gmail.com
             </a>
           </div>
           <div>
-            <p class="text-black/45">Project</p>
-            <p class="pt-1 font-semibold text-ink">RAG Docs Assistant</p>
+            <p class="text-black/45">LinkedIn</p>
+            <a
+              class="inline-block pt-1 font-semibold text-ink underline decoration-ember/40 underline-offset-4"
+              href="https://www.linkedin.com/in/hphucnp/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              linkedin.com/in/hphucnp
+            </a>
+          </div>
+          <div>
+            <p class="text-black/45">GitHub Repo</p>
+            <a
+              class="inline-block pt-1 font-semibold text-ink underline decoration-ember/40 underline-offset-4"
+              href="https://github.com/hphucnp/rag-docs-assistant"
+              target="_blank"
+              rel="noreferrer"
+            >
+              github.com/hphucnp/rag-docs-assistant
+            </a>
           </div>
         </div>
       </section>
