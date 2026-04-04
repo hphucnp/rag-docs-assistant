@@ -304,37 +304,30 @@ async def rewrite_summary(
     jd_text = "\n".join([r.content for r in jd_results])
     cv_experience = "\n".join([r.content for r in cv_results])
 
-    chat_service = get_chat_service()
+    from app.services.ai.graph import app_graph, SummaryState
 
-    system_prompt = (
-        "You are an expert resume writer specializing in ATS and recruiter-friendly "
-        "formatting. Rewrite the professional summary so it is concise, aligned with "
-        "the job description, action-oriented, results-focused, and grounded in the "
-        "candidate's real experience."
+    initial_state = SummaryState(
+        jd_context=jd_text,
+        cv_context=cv_experience,
+        notes_context=_notes_context(notes_document),
+        current_summary=current_summary or "",
+        draft_summary="",
+        critic_feedback="",
+        score=0,
+        iterations=0
     )
 
-    user_prompt = f"""
-JOB DESCRIPTION:
-{jd_text}
+    # Invoke the LangGraph reflection loop (Self-RAG)
+    final_state = await app_graph.ainvoke(initial_state)
 
-CANDIDATE'S BACKGROUND:
-{cv_experience}
-{_notes_context(notes_document)}
-
-Current summary (if any): {current_summary or "No existing summary"}
-
-Please rewrite the professional summary to match this job description while staying
-true to the candidate's actual experience."""
-
-    new_summary = await chat_service.generate(
-        system_prompt=system_prompt,
-        user_prompt=user_prompt,
-        model=settings.llm_model,
-        temperature=0.4,
+    # For UI transparency, append the agent reflection metrics to the output text
+    metrics_str = (
+        f"\n\n> **LangGraph Diagnostics:** Completed in {final_state['iterations']} iteration(s). "
+        f"Final Critic Score: {final_state['score']}/10."
     )
 
     return {
-        "new_summary": new_summary,
+        "new_summary": final_state["draft_summary"] + metrics_str,
         "jd_sources": [r.model_dump() for r in jd_results],
         "cv_sources": [r.model_dump() for r in cv_results],
     }

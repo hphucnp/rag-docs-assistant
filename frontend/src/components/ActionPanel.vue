@@ -2,6 +2,7 @@
 import { useMatchStore } from "../composables/useMatchStore";
 
 const store = useMatchStore();
+const currentSummary = store.currentSummary;
 </script>
 
 <template>
@@ -34,7 +35,7 @@ const store = useMatchStore();
     <label class="mt-4 block">
       <span class="mb-2 block text-sm text-black/60">Current summary</span>
       <textarea
-        v-model="store.currentSummary"
+        v-model="currentSummary"
         class="field-shell min-h-28 resize-y"
         rows="3"
         placeholder="Optional: paste the candidate's current CV summary before rewriting"

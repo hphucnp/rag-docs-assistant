@@ -74,6 +74,8 @@
           <span class="rounded-full border border-black/10 bg-white/75 px-4 py-2">FastAPI</span>
           <span class="rounded-full border border-black/10 bg-white/75 px-4 py-2">Vue 3</span>
           <span class="rounded-full border border-black/10 bg-white/75 px-4 py-2">pgvector</span>
+          <span class="rounded-full border border-black/10 bg-white/75 px-4 py-2">MinIO</span>
+          <span class="rounded-full border border-black/10 bg-white/75 px-4 py-2">LangGraph</span>
           <span class="rounded-full border border-black/10 bg-white/75 px-4 py-2">OpenAI / Groq / Ollama</span>
           <span class="rounded-full border border-black/10 bg-white/75 px-4 py-2">Docker</span>
         </div>
